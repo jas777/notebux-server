@@ -10,6 +10,7 @@ object Users : Table("users") {
     val email = varchar("email", 256)
     val password = varchar("password", 400)
     val activated = bool("activated")
+    // TODO val favoriteEmails =
     override val primaryKey = PrimaryKey(id)
 }
 

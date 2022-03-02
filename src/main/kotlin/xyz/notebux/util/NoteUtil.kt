@@ -21,7 +21,8 @@ object NoteUtil {
             row[Notes.id].toString(),
             row[Notes.createdAt].toEpochMilli(),
             row[Notes.lastEdited].toEpochMilli(),
-            null
+            null,
+            row[Notes.sharedGlobally]
         )
     }
 

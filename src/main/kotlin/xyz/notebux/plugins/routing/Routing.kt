@@ -1,6 +1,5 @@
 package xyz.notebux.plugins
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -11,8 +10,8 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import xyz.notebux.entities.Users
-import xyz.notebux.services.AuthService
-import xyz.notebux.services.NoteService
+import xyz.notebux.plugins.routing.authRoutes
+import xyz.notebux.plugins.routing.noteRoutes
 import xyz.notebux.services.VerificationService
 import xyz.notebux.util.UserUtil
 
@@ -52,41 +51,17 @@ fun Application.configureRouting() {
             call.respondText("Hello World!")
         }
 
-        post("auth/login") {
-            AuthService.handleLogin(this)
-        }
-
-        post("auth/register") {
-            AuthService.handleRegister(this)
-        }
-
         post("verify_email") {
             VerificationService.handleKeyVerification(this)
         }
 
+        route("notes") {
+            noteRoutes()
+        }
+
+        authRoutes()
+
         authenticate {
-            route("notes") {
-                post("new") {
-                    NoteService.handleNewNote(this)
-                }
-
-                put("edit/{id}") {
-                    NoteService.handleEditNote(this)
-                }
-
-                get("delete/{id}") {
-                    NoteService.handleDeleteNote(this)
-                }
-
-                get("user") {
-                    NoteService.handleUserNotes(this)
-                }
-
-                get("{id}") {
-                    NoteService.handleGetNote(this)
-                }
-            }
-
             get("@me") {
                 val authorizedUser = call.authentication.principal<JwtUser>() ?: throw AuthorizationException()
 

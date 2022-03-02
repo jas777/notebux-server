@@ -10,10 +10,11 @@ object Notes : Table("notes") {
     val author = reference("author", Users.id)
     val lastEdited = timestamp("last_edit")
     val createdAt = timestamp("created_at")
+    val sharedGlobally = bool("shared_globally")
     override val primaryKey = PrimaryKey(id)
 }
 
-data class NoteDto(val title: String, val content: String, val shareTo: List<String>)
+data class NoteDto(val title: String, val content: String, val shareTo: List<String>, val sharedGlobally: Boolean)
 
 data class Note(
     val title: String,
@@ -22,5 +23,6 @@ data class Note(
     val id: String,
     val createdAt: Long,
     val lastEdited: Long,
-    val shareTo: List<String>?
+    val shareTo: List<String>?,
+    val sharedGlobally: Boolean
 )

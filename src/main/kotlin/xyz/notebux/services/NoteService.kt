@@ -36,6 +36,7 @@ object NoteService {
                 it[author] = user[Users.id]
                 it[createdAt] = Instant.now()
                 it[lastEdited] = Instant.now()
+                it[sharedGlobally] = false
             }
 
             noteData.shareTo.forEach {
@@ -79,6 +80,7 @@ object NoteService {
                 it[title] = noteData.title
                 it[content] = noteData.content
                 it[lastEdited] = Instant.now()
+                it[sharedGlobally] = noteData.sharedGlobally
             }
 
             Notes.select { Notes.id eq noteUuid }.first()
@@ -136,7 +138,8 @@ object NoteService {
                         it[Notes.id].toString(),
                         it[Notes.createdAt].toEpochMilli(),
                         it[Notes.lastEdited].toEpochMilli(),
-                        null
+                        null,
+                        false
                     )
                 }
         }
@@ -158,7 +161,10 @@ object NoteService {
 
             val emails = NoteUtil.getNoteSharedEmails(noteUuid)
 
-            if (note[Notes.author] != authorizedUser.id && !emails.contains(authorizedUser.email)) throw AuthorizationException()
+            if (note[Notes.author] != authorizedUser.id && !emails.contains(
+                    authorizedUser.email
+                )
+            ) throw AuthorizationException()
 
             call.respondText {
                 Gson().toJson(
@@ -169,7 +175,8 @@ object NoteService {
                         note[Notes.id].toString(),
                         note[Notes.createdAt].toEpochMilli(),
                         note[Notes.lastEdited].toEpochMilli(),
-                        emails
+                        emails,
+                        note[Notes.sharedGlobally]
                     )
                 )
             }
