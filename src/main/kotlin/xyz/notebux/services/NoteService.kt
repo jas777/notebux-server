@@ -148,40 +148,44 @@ object NoteService {
 
     }
 
-    suspend fun handleGetNote(pipelineContext: PipelineContext<Unit, ApplicationCall>) = with(pipelineContext) {
-        val authorizedUser = call.authentication.principal<JwtUser>() ?: throw AuthorizationException()
-        val noteUuid = getUUID(pipelineContext) ?: throw ValidationException("Invalid UUID!")
+    suspend fun handleGetNote(pipelineContext: PipelineContext<Unit, ApplicationCall>, authenticated: Boolean) =
+        with(pipelineContext) {
+            val authorizedUser = call.authentication.principal<JwtUser>()
+            val noteUuid = getUUID(pipelineContext) ?: throw ValidationException("Invalid UUID!")
 
-        val note = transaction {
-            Notes.select { Notes.id eq noteUuid }.firstOrNull()
-        }
+            val note = transaction {
+                Notes.select { Notes.id eq noteUuid }.firstOrNull()
+            }
 
-        if (note === null) call.respond(HttpStatusCode.NotFound, "Invalid note")
-        else {
+            if (note === null) call.respond(HttpStatusCode.NotFound, "Invalid note")
+            else {
 
-            val emails = NoteUtil.getNoteSharedEmails(noteUuid)
+                val emails = NoteUtil.getNoteSharedEmails(noteUuid)
 
-            if (note[Notes.author] != authorizedUser.id && !emails.contains(
-                    authorizedUser.email
-                )
-            ) throw AuthorizationException()
+                if (authenticated && authorizedUser != null && (note[Notes.author] != authorizedUser.id && !emails.contains(
+                        authorizedUser.email
+                    ))
+                ) throw AuthorizationException()
 
-            call.respondText {
-                Gson().toJson(
-                    Note(
-                        note[Notes.title],
-                        note[Notes.content],
-                        note[Notes.author].toString(),
-                        note[Notes.id].toString(),
-                        note[Notes.createdAt].toEpochMilli(),
-                        note[Notes.lastEdited].toEpochMilli(),
-                        emails,
-                        note[Notes.sharedGlobally]
+
+                if (!authenticated && !note[Notes.sharedGlobally]) throw AuthorizationException()
+
+                call.respondText {
+                    Gson().toJson(
+                        Note(
+                            note[Notes.title],
+                            note[Notes.content],
+                            note[Notes.author].toString(),
+                            note[Notes.id].toString(),
+                            note[Notes.createdAt].toEpochMilli(),
+                            note[Notes.lastEdited].toEpochMilli(),
+                            emails,
+                            note[Notes.sharedGlobally]
+                        )
                     )
-                )
+                }
             }
         }
-    }
 
     private fun getUUID(pipelineContext: PipelineContext<Unit, ApplicationCall>): UUID? = with(pipelineContext) {
         val noteId = call.parameters["id"]

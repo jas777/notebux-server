@@ -25,7 +25,10 @@ fun Route.noteRoutes() {
         }
 
         get("{id}") {
-            NoteService.handleGetNote(this)
+            NoteService.handleGetNote(this, true)
         }
+    }
+    get("shared/{id}") {
+        NoteService.handleGetNote(this, false)
     }
 }
